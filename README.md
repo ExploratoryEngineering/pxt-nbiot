@@ -16,8 +16,8 @@ GND | GND
 ## Basic usage
 
 ```blocks
-// enable the NB-IoT module on chosen pins (default P0 and P1)
-nbiot.enable(SerialPin.P0, SerialPin.P1)
+// connect to the NB-IoT module on chosen pins (default P0 and P1)
+nbiot.connect(SerialPin.P0, SerialPin.P1)
 
 // run the code when we're successfully connected to the network
 nbiot.onConnected(function () {

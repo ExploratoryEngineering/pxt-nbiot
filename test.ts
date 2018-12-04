@@ -16,4 +16,4 @@ basic.forever(function () {
 })
 
 basic.showIcon(IconNames.Sad)
-nbiot.enable()
+nbiot.connect(SerialPin.P0, SerialPin.P1)

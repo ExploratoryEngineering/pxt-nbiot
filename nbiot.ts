@@ -13,14 +13,16 @@ namespace nbiot {
     const connectCallbacks: (() => void)[] = []
 
     /**
-     * Enable the NB-IoT module
-     * This involves opening a serial connection on chosen pins and restart the module
-     * to clear previous state.
-     * @param rx The pin that is connected to RXD on EE-NBIOT-01 (default SerialPin.P0)
-     * @param tx The pin that is connected to TXD on EE-NBIOT-01 (default SerialPin.P1)
+     * Connect to the NB-IoT module
+     * This involves opening a serial connection on chosen pins and connect to the
+     * NB-IoT network.
+     * @param rx The pin that is connected to RXD on EE-NBIOT-01, eg: SerialPin.P0
+     * @param tx The pin that is connected to TXD on EE-NBIOT-01, eg: SerialPin.P1
      */
-    //% block
-    export function enable(rx: SerialPin = SerialPin.P0, tx: SerialPin = SerialPin.P1): void {
+    //% blockId=nbiot_connect
+    //% block="connect RX on %rx and TX on %tx"
+    //% weight = 10
+    export function connect(rx: SerialPin, tx: SerialPin): void {
         serial.redirect(tx, rx, BaudRate.BaudRate9600)
         basic.pause(1000)
 
@@ -68,9 +70,46 @@ namespace nbiot {
     //% blockId=nbiot_set_server
     //% block="set|server ip %ip port %port"
     //% port.min=0 port.max=65535
+    //% weight = 20
     export function setServer(ip: string, port: number) {
         serverIp = ip
         serverPort = port
+    }
+
+    /**
+     * Execute custom code when we get a connection to the network
+     * @param code The custom code block(s) to run when we get a connection
+     */
+    //% blockId=nbiot_on_connected block="on nbiot connected"
+    //% weight = 30
+    export function onConnected(code: () => void): void {
+        connectCallbacks.push(code)
+    }
+
+    /**
+     * Send text or number as a string
+     * @param str The text or number you want to send, eg: "Hello World!", 42
+     */
+    //% block
+    //% str.shadowOptions.toString=true
+    //% weight = 40
+    export function sendString(str: string): void {
+        const buf = pins.createBuffer(str.length)
+        for (let i = 0; i < str.length; i++) {
+            buf.setNumber(NumberFormat.UInt8BE, i, str.charCodeAt(i))
+        }
+        sendBuffer(buf)
+    }
+
+    /**
+     * Send a number
+     * @param num The number to send, eg: 42
+     */
+    //% block
+    //% weight = 50
+    export function sendNumber(num: number): void {
+        const buf = pins.createBufferFromArray([num])
+        sendBuffer(buf)
     }
 
     /**
@@ -79,15 +118,9 @@ namespace nbiot {
      * attached to the network, or false if not.
      */
     //% block
+    //% weight = 60
     export function isConnected(): boolean {
         return _isConnected
-    }
-
-    function checkConnection(): number {
-        writeCommand("AT+CEREG?")
-        let response = readLine()
-        drain()
-        return parseInt(response.charAt(10))
     }
 
     /**
@@ -141,48 +174,6 @@ namespace nbiot {
     }
 
     /**
-     * Send text or number as a string
-     * @param str The text or number you want to send, eg: "Hello World!", 42
-     */
-    //% block
-    //% str.shadowOptions.toString=true
-    export function sendString(str: string): void {
-        const buf = pins.createBuffer(str.length)
-        for (let i = 0; i < str.length; i++) {
-            buf.setNumber(NumberFormat.UInt8BE, i, str.charCodeAt(i))
-        }
-        sendBuffer(buf)
-    }
-
-    /**
-     * Send a number
-     * @param num The number to send, eg: 42
-     */
-    //% block
-    export function sendNumber(num: number): void {
-        const buf = pins.createBufferFromArray([num])
-        sendBuffer(buf)
-    }
-
-    /**
-     * Execute custom code when we get a connection to the network
-     * @param code The custom code block(s) to run when we get a connection
-     */
-    //% blockId=nbiot_on_connected block="on nbiot connected"
-    export function onConnected(code: () => void): void {
-        connectCallbacks.push(code)
-    }
-
-    function sendBuffer(buf: Buffer): void {
-        if (!_isConnected || buf.length == 0) {
-            return
-        } else if (socket == -1) {
-            createSocket()
-        }
-        writeCommand(`AT+NSOST=${socket},"${serverIp}",${serverPort},${buf.length},"${buf.toHex()}"`)
-    }
-
-    /**
      * Send raw AT-command to u-blox N210 and wait for OK
      * After 3 failed attempts it reboots the micro:bit
      * @param cmd The full command, eg: "AT+CFUN=1"
@@ -217,28 +208,6 @@ namespace nbiot {
             basic.showString("ERR exec: " + cmd)
         }
         die()
-    }
-
-    function waitForResponse(timeout = 10000): boolean {
-        const delayTime = 100
-        let end = input.runningTime() + timeout
-
-        while (input.runningTime() < end) {
-            if (lines.length > 0) {
-                let lastLine = lines[lines.length - 1]
-                if (lastLine == "OK") {
-                    return true
-                } else if (lastLine.indexOf("ERROR") >= 0) {
-                    if (DEBUG && lastLine.indexOf("+CME") == 0) {
-                        let err = lastLine.substr(12)
-                        basic.showString(`E${err}`)
-                    }
-                    return false
-                }
-            }
-            basic.pause(delayTime)
-        }
-        return false
     }
 
     /**
@@ -277,6 +246,37 @@ namespace nbiot {
         return waitForResponse()
     }
 
+    function sendBuffer(buf: Buffer): void {
+        if (!_isConnected || buf.length == 0) {
+            return
+        } else if (socket == -1) {
+            createSocket()
+        }
+        writeCommand(`AT+NSOST=${socket},"${serverIp}",${serverPort},${buf.length},"${buf.toHex()}"`)
+    }
+
+    function waitForResponse(timeout = 10000): boolean {
+        const delayTime = 100
+        let end = input.runningTime() + timeout
+
+        while (input.runningTime() < end) {
+            if (lines.length > 0) {
+                let lastLine = lines[lines.length - 1]
+                if (lastLine == "OK") {
+                    return true
+                } else if (lastLine.indexOf("ERROR") >= 0) {
+                    if (DEBUG && lastLine.indexOf("+CME") == 0) {
+                        let err = lastLine.substr(12)
+                        basic.showString(`E${err}`)
+                    }
+                    return false
+                }
+            }
+            basic.pause(delayTime)
+        }
+        return false
+    }
+
     /**
      * Discard unread received serial data
      */
@@ -288,6 +288,13 @@ namespace nbiot {
             //    basic.showString("drain: " + data)
             //}
         } while (data)
+    }
+
+    function checkConnection(): number {
+        writeCommand("AT+CEREG?")
+        let response = readLine()
+        drain()
+        return parseInt(response.charAt(10))
     }
 
     function die(): boolean {
