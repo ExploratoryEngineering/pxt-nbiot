@@ -40,7 +40,6 @@ input.onButtonPressed(Button.B, function () {
 ## TODO
 
 - [ ] Add a reference for your blocks here
-- [ ] Add "icon.png" image (300x200) in the root folder
 - [ ] Use "pxt bump" to create a tagged release on GitHub
 - [ ] Get your package reviewed and approved https://makecode.microbit.org/packages/approval
 
