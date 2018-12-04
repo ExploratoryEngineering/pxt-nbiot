@@ -1,8 +1,8 @@
 # pxt-nbiot
 
-A package to use a Narrowband IoT board with u-blox SARA N2xx with micro:bit. [Like the one we've made for Telenor Norway](https://shop.exploratory.engineering/collections/nb-iot/products/assembled-ee-nbiot-01-v1-1-breakout-module). With NB-IoT you can send short messages from [anywhere there is 4G coverage that has been upgraded for NB-IoT](https://www.gsma.com/iot/deployment-map/).
+A package to use a Narrowband IoT board with u-blox SARA N2xx with micro:bit. We made this package so the [board we've made](https://shop.exploratory.engineering/collections/nb-iot/products/assembled-ee-nbiot-01-v1-1-breakout-module) can be used with a micro:bit. That board only works with Telenor Norway, but it should be possible to use this with any board that has a u-blox SARA N2xx and exposes the RXD and TXD pins. NB-IoT is a technology using the mobile network to send small messages from [anywhere there is 4G coverage that has been upgraded for NB-IoT](https://www.gsma.com/iot/deployment-map/).
 
-The micro:bit needs to be powered by a power source which can handle the u-blox SARA N210, which is minimum 3.1V. So the common 2xAA battery pack won't do (only 3.0V). USB should work fine.
+The micro:bit needs to be powered by a power source which can handle the u-blox SARA N210, which is minimum 3.1V. So the common 2xAA battery pack won't do (only 3.0V). USB should work fine because it's regulated to 3.3V on the micro:bit.
 
 ## Wiring
 
@@ -10,7 +10,7 @@ micro:bit | SARA N210
 ---------:|----------
 P0 | RXD
 P1 | TXD
-3V | VCC
+3V (see note above) | VCC
 GND | GND
 
 ## Basic usage
