@@ -3,7 +3,7 @@ nbiot.onConnected(function () {
 })
 
 input.onButtonPressed(Button.A, function () {
-    nbiot.sendNumberAsString(123)
+    nbiot.sendNumber(123)
 })
 
 input.onButtonPressed(Button.B, function () {
@@ -11,7 +11,7 @@ input.onButtonPressed(Button.B, function () {
 })
 
 basic.forever(function () {
-    nbiot.sendNumberAsString(input.temperature())
+    nbiot.sendString("" + input.temperature())
     basic.pause(60000)
 })
 

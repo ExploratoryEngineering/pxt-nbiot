@@ -1,11 +1,13 @@
 /**
  * NB-IoT blocks
  */
-//% weight=100 color=#0fbc11 icon="\uf1eb"
+//% weight=100 color=#1eadf8 icon="\uf1d8" block="NB-IoT"
 namespace nbiot {
     const DEBUG = false
     let lines: string[] = []
     let socket = -1
+    let serverIp = "172.16.15.14"
+    let serverPort = 1234
     let awaitingResponse = false
     let _isConnected = false
     const connectCallbacks: (() => void)[] = []
@@ -55,6 +57,20 @@ namespace nbiot {
                 basic.pause(100)
             })
         })
+    }
+
+    /**
+     * Configure server IP address and port. When sending strings or numbers,
+     * it will be sent as an UPD message to this IP and port.
+     * @param ip The IP address to send data, eg: "172.16.15.14"
+     * @param port The port to send data, eg: 1234
+     */
+    //% blockId=nbiot_set_server
+    //% block="set|server ip %ip port %port"
+    //% port.min=0 port.max=65535
+    export function setServer(ip: string, port: number) {
+        serverIp = ip
+        serverPort = port
     }
 
     /**
@@ -125,10 +141,11 @@ namespace nbiot {
     }
 
     /**
-     * Send a text string
-     * @param str The string you want to send, eg: "Hello World!"
+     * Send text or number as a string
+     * @param str The text or number you want to send, eg: "Hello World!", 42
      */
     //% block
+    //% str.shadowOptions.toString=true
     export function sendString(str: string): void {
         const buf = pins.createBuffer(str.length)
         for (let i = 0; i < str.length; i++) {
@@ -148,15 +165,6 @@ namespace nbiot {
     }
 
     /**
-     * Send a number as a string
-     * @param num The number to send as string, eg: 42
-     */
-    //% block
-    export function sendNumberAsString(num: number): void {
-        sendString(num.toString())
-    }
-
-    /**
      * Execute custom code when we get a connection to the network
      * @param code The custom code block(s) to run when we get a connection
      */
@@ -171,7 +179,7 @@ namespace nbiot {
         } else if (socket == -1) {
             createSocket()
         }
-        writeCommand(`AT+NSOST=${socket},"172.16.15.14",1234,${buf.length},"${buf.toHex()}"`)
+        writeCommand(`AT+NSOST=${socket},"${serverIp}",${serverPort},${buf.length},"${buf.toHex()}"`)
     }
 
     /**
