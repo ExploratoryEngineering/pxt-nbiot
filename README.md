@@ -19,6 +19,9 @@ GND | GND
 // connect to the NB-IoT module on chosen pins (default P0 and P1)
 nbiot.connect(SerialPin.P0, SerialPin.P1)
 
+// configure what server to send to
+nbiot.setServer("172.16.15.14", 1234)
+
 // run the code when we're successfully connected to the network
 nbiot.onConnected(function () {
     basic.showString("Connected")
@@ -33,8 +36,6 @@ input.onButtonPressed(Button.B, function () {
     nbiot.sendString("Hello")
 })
 ```
-
-Use ``||sendNumberAsString||`` if you want to send a number as a text string instead of a number.
 
 ## TODO
 
