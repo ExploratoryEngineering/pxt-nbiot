@@ -28,11 +28,7 @@ namespace nbiot {
 
         control.inBackground(() => {
             while (true) {
-                let line = serial.readUntil("\r\n")
-                if (line.length > 0) {
-                    lines.push(line)
-                }
-                basic.pause(10)
+                readSerialData()
             }
         })
 
@@ -131,7 +127,6 @@ namespace nbiot {
     export function signalStrength(): number {
         writeCommand("AT+CSQ")
         let power = parseInt(readLine().substr(6))
-        drain()
         if (power == 99) {
             return 99
         }
@@ -145,9 +140,7 @@ namespace nbiot {
     //% advanced=true
     export function imsi(): string {
         writeCommand("AT+CIMI")
-        let imsi = readLine()
-        drain()
-        return imsi
+        return readLine()
     }
 
     /**
@@ -157,9 +150,7 @@ namespace nbiot {
     //% advanced=true
     export function imei(): string {
         writeCommand("AT+CGSN=1")
-        let imei = readLine().substr(7)
-        drain()
-        return imei
+        return readLine().substr(7, 15)
     }
 
     /**
@@ -170,7 +161,6 @@ namespace nbiot {
     export function createSocket() {
         writeCommand(`AT+NSOCR="DGRAM",17,30000,1`)
         socket = parseInt(readLine())
-        drain()
     }
 
     /**
@@ -192,9 +182,6 @@ namespace nbiot {
 
         while (retries-- > 0) {
             drain()
-            while (lines.length > 0) {
-                lines.pop()
-            }
 
             serial.writeString(cmd + "\r")
             if (waitForResponse(timeout)) {
@@ -237,13 +224,29 @@ namespace nbiot {
     //% block
     //% advanced=true
     export function reboot(): boolean {
-        drain()
         serial.writeString("AT+NRB\r")
         basic.pause(2000)
-        while (lines.length > 0) {
-            lines.pop()
-        }
+        drain()
         return waitForResponse()
+    }
+
+    let rxData = ""
+    function readSerialData(): void {
+        // block read until we get a character
+        let tmp = serial.readBuffer(1)
+        let char = String.fromCharCode(tmp.getNumber(NumberFormat.UInt8LE, 0))
+        rxData += char
+
+        // check if we have a complete line
+        let lineEnd = rxData.indexOf("\r\n")
+        if (lineEnd == -1) {
+            return
+        }
+        // ignore empty lines
+        if (lineEnd > 0) {
+            lines.push(rxData.substr(0, lineEnd))
+        }
+        rxData = rxData.substr(lineEnd + 2)
     }
 
     function sendBuffer(buf: Buffer): void {
@@ -281,19 +284,15 @@ namespace nbiot {
      * Discard unread received serial data
      */
     export function drain(): void {
-        let data: string
-        do {
-            data = serial.readString()
-            //if (data) {
-            //    basic.showString("drain: " + data)
-            //}
-        } while (data)
+        rxData = ""
+        while (lines.length > 0) {
+            lines.pop()
+        }
     }
 
     function checkConnection(): number {
         writeCommand("AT+CEREG?")
         let response = readLine()
-        drain()
         return parseInt(response.charAt(10))
     }
 
