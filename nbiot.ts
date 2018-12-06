@@ -26,6 +26,12 @@ namespace nbiot {
         serial.redirect(tx, rx, BaudRate.BaudRate9600)
         basic.pause(1000)
 
+        if (DEBUG) {
+            control.onEvent(DAL.MICROBIT_ID_SERIAL, DAL.MICROBIT_SERIAL_EVT_RX_FULL, function () {
+                basic.showIcon(IconNames.No)
+            })
+        }
+
         control.inBackground(() => {
             while (true) {
                 readSerialData()
