@@ -130,8 +130,35 @@ namespace nbiot {
     //% block
     //% weight = 50
     export function sendNumber(num: number): void {
-        const buf = pins.createBufferFromArray([num])
+        sendBytes([num])
+    }
+
+    /**
+     * Send bytes
+     * @param bytes An array of bytes
+     */
+    //% block
+    //% weight = 60
+    //% advanced=true
+    export function sendBytes(bytes: number[]): void {
+        const buf = pins.createBufferFromArray(bytes)
         sendBuffer(buf)
+    }
+
+    /**
+     * Send buffer
+     * @param buffer The buffered data to send
+     */
+    //% block
+    //% weight = 70
+    //% advanced=true
+    export function sendBuffer(buffer: Buffer): void {
+        if (!_isConnected || buffer.length == 0) {
+            return
+        } else if (socket == -1) {
+            createSocket()
+        }
+        writeCommand(`AT+NSOST=${socket},"${serverIp}",${serverPort},${buffer.length},"${buffer.toHex()}"`)
     }
 
     /**
@@ -140,7 +167,7 @@ namespace nbiot {
      * attached to the network, or false if not.
      */
     //% block
-    //% weight = 60
+    //% weight = 80
     export function isConnected(): boolean {
         return _isConnected
     }
@@ -253,15 +280,6 @@ namespace nbiot {
             lines.push(rxData.substr(0, lineEnd))
         }
         rxData = rxData.substr(lineEnd + 2)
-    }
-
-    function sendBuffer(buf: Buffer): void {
-        if (!_isConnected || buf.length == 0) {
-            return
-        } else if (socket == -1) {
-            createSocket()
-        }
-        writeCommand(`AT+NSOST=${socket},"${serverIp}",${serverPort},${buf.length},"${buf.toHex()}"`)
     }
 
     function waitForResponse(timeout = 10000): boolean {
