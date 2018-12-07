@@ -64,6 +64,26 @@ namespace nbiot {
     }
 
     /**
+     * Get the IMSI from the sim card on the EE-NBIOT-01
+     */
+    //% block
+    //% weight = 11
+    export function imsi(): string {
+        writeCommand("AT+CIMI")
+        return readLine()
+    }
+
+    /**
+     * Get the IMEI from the u-blox N210
+     */
+    //% block
+    //% weight = 12
+    export function imei(): string {
+        writeCommand("AT+CGSN=1")
+        return readLine().substr(7, 15)
+    }
+
+    /**
      * Configure server IP address and port. When sending strings or numbers,
      * it will be sent as an UPD message to this IP and port.
      * @param ip The IP address to send data, eg: "172.16.15.14"
@@ -137,26 +157,6 @@ namespace nbiot {
             return 99
         }
         return -113 + power * 2
-    }
-
-    /**
-     * Get the IMSI from the sim card on the EE-NBIOT-01
-     */
-    //% block
-    //% advanced=true
-    export function imsi(): string {
-        writeCommand("AT+CIMI")
-        return readLine()
-    }
-
-    /**
-     * Get the IMEI from the u-blox N210
-     */
-    //% block
-    //% advanced=true
-    export function imei(): string {
-        writeCommand("AT+CGSN=1")
-        return readLine().substr(7, 15)
     }
 
     /**
