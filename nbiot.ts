@@ -64,7 +64,7 @@ namespace nbiot {
     }
 
     /**
-     * Get the IMSI from the sim card on the EE-NBIOT-01
+     * Get the IMSI from the sim card
      */
     //% block
     //% weight = 11
@@ -200,11 +200,12 @@ namespace nbiot {
      * Send raw AT-command to u-blox N210 and wait for OK
      * After 3 failed attempts it reboots the micro:bit
      * @param cmd The full command, eg: "AT+CFUN=1"
-     * @param retries How many times to retry in case the command fails (default 3)
-     * @param wait How long (in ms) to wait between a failed attempt and retrying (default 1000)
-     * @param timeout How long to wait for a response (in ms) before timing out (default 30000)
+     * @param retries How many times to retry in case the command fails, eg: 3
+     * @param wait How long (in ms) to wait between a failed attempt and retrying, eg: 1000
+     * @param timeout How long to wait for a response (in ms) before timing out, eg: 30000
      */
-    //% block
+    //% blockId=nbiot_write_command
+    //% block="write command %cmd number of retries %retries wait between retries (ms) %wait timeout after (ms) %timeout"
     //% advanced=true
     export function writeCommand(cmd: string, retries = 3, wait = 1000, timeout = 30000): void {
         while (awaitingResponse) {
