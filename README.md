@@ -4,6 +4,10 @@ A package to use a Narrowband IoT board with u-blox SARA N2xx with micro:bit. We
 
 The micro:bit needs to be powered by a power source which can handle the u-blox SARA N210, which is minimum 3.1V. So the common 2xAA battery pack won't do (only 3.0V). USB should work fine because it's regulated to 3.3V on the micro:bit.
 
+## Installation
+
+To use this extension, go to [makecode](https://makecode.microbit.org/) and edit or create a new project. Click the gear in the top right corner and «Extensions». Paste in the URL to this github repository: `https://github.com/ExploratoryEngineering/pxt-nbiot` and click on it so add it to the project. You should now see `NB-IoT` in the menu of available blocks.
+
 ## Wiring
 
 micro:bit | SARA N210
