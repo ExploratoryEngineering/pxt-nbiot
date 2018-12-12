@@ -104,6 +104,27 @@ Send a number. A socket will be automatically created if needed.
 nbiot.sendNumber(42)
 ```
 
+### on received string
+
+Receivea a text string. A socket will be opened on port 30000 if needed.
+Normally you can't reach a device in a mobile network, so you need a mobile
+operator that allows this.
+
+```block
+nbiot.onReceivedString((text: string) => {})
+```
+
+### on received number
+
+Receive a number. The number will be interpreted as a signed int in big endian
+format (max 32 bit). A socket will be opened on port 30000 if needed. Normally
+you can't reach a device in a mobile network, so you need a mobile operator
+that allows this.
+
+```block
+nbiot.onReceivedNumber((num: number) => {})
+```
+
 ### is connected
 
 Check if we're connected to the network. Returns `true` if connected and `false` if not connected.
@@ -116,7 +137,7 @@ nbiot.isConnected()
 
 ### send bytes
 
-Send an array as bytes. A socket will be automatically created if needed.
+Send an array as bytes. A socket will be automatically created if needed. 
 
 ```block
 let bytes = [1,2,3]
@@ -134,6 +155,26 @@ for (let i = 0; i < str.length; i++) {
     buffer.setNumber(NumberFormat.UInt8BE, i, i*2)
 }
 nbiot.sendBuffer(buffer)
+```
+
+### on received bytes
+
+Receive a downstream message as an array of bytes. A socket will be opened on
+port 30000 if needed. Normally you can't reach a device in a mobile network, so
+you need a mobile operator that allows this.
+
+```block
+nbiot.onReceivedBytes((bytes: number[]) => {})
+```
+
+### on received buffer
+
+Receive a downstream message as a buffer. A socket will be opened on port 30000
+if needed. Normally you can't reach a device in a mobile network, so you need a
+mobile operator that allows this.
+
+```block
+nbiot.onReceivedBuffer((buffer: Buffer) => {})
 ```
 
 ### signal strength

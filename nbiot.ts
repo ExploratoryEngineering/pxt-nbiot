@@ -4,6 +4,11 @@
 //% weight=100 color=#1eadf8 icon="\uf1d8" block="NB-IoT"
 namespace nbiot {
     const DEBUG = false
+    const enum NbiotEvents {
+        ID = 7107,
+        RX_END = 0,
+        RECEIVED_MSG,
+    }
     let lines: string[] = []
     let socket = -1
     let serverIp = "172.16.15.14"
@@ -48,6 +53,12 @@ namespace nbiot {
 
         // enable more detailed errors
         writeCommand("AT+CMEE=1")
+
+        // disable eDRX
+        writeCommand("AT+CEDRXS=3,5")
+
+        // disable Power Save Mode
+        writeCommand("AT+CPSMS=2")
 
         // trigger on connect callbacks
         control.inBackground(() => {
@@ -134,11 +145,54 @@ namespace nbiot {
     }
 
     /**
+     * Receive a message
+     */
+    //% blockId=nbiot_on_receive_string
+    //% block="on nbiot received"
+    //% blockHandlerKey="nbiotreceived"
+    //% weight = 60
+    export function onReceivedString(callback: (text: string) => void): void {
+        onReceivedBuffer((buffer: Buffer) => {
+            let text = ""
+            for (let i = 0; i < buffer.length; i++) {
+                text += String.fromCharCode(buffer.getNumber(NumberFormat.UInt8LE, i))
+            }
+            callback(text)
+        })
+    }
+
+    /**
+     * Receive a number
+     * 
+     * The number will be interpreted as a signed int in big endian format (max 32 bit)
+     */
+    //% blockId=nbiot_on_receive_number
+    //% block="on nbiot received"
+    //% blockHandlerKey="nbiotreceived"
+    //% weight = 61
+    export function onReceivedNumber(callback: (num: number) => void): void {
+        onReceivedBuffer((buffer: Buffer) => {
+            let format: NumberFormat
+            if (buffer.length <= 1) {
+                format = NumberFormat.Int8BE
+            } else if (buffer.length <= 2) {
+                format = NumberFormat.Int16BE
+            } else if (buffer.length <= 4) {
+                format = NumberFormat.Int32BE
+            } else if (DEBUG) {
+                basic.showString("Received number exeeds Int32")
+                return
+            }
+            callback(buffer.getNumber(format, 0))
+        })
+    }
+
+    /**
      * Send bytes
      * @param bytes An array of bytes
      */
     //% block
-    //% weight = 60
+    //% weight = 70
     //% advanced=true
     export function sendBytes(bytes: number[]): void {
         const buf = pins.createBufferFromArray(bytes)
@@ -150,15 +204,62 @@ namespace nbiot {
      * @param buffer The buffered data to send
      */
     //% block
-    //% weight = 70
+    //% weight = 71
     //% advanced=true
     export function sendBuffer(buffer: Buffer): void {
         if (!_isConnected || buffer.length == 0) {
             return
-        } else if (socket == -1) {
-            createSocket()
         }
+        ensureSocket()
         writeCommand(`AT+NSOST=${socket},"${serverIp}",${serverPort},${buffer.length},"${buffer.toHex()}"`)
+    }
+
+    /**
+     * Receive bytes
+     */
+    //% blockId=nbiot_on_receive_bytes
+    //% block="on nbiot received"
+    //% blockHandlerKey="nbiotreceived"
+    //% weight = 80
+    //% advanced=true
+    export function onReceivedBytes(callback: (bytes: number[]) => void): void {
+        onReceivedBuffer((buffer: Buffer) => {
+            let bytes:NumberFormat.UInt8LE[] = []
+            for (let i = 0; i < buffer.length; i++) {
+                bytes.push(buffer.getNumber(NumberFormat.UInt8LE, i))
+            }
+            callback(bytes)
+        })
+    }
+
+    /**
+     * Receive buffer
+     */
+    //% blockId=nbiot_on_receive_buffer
+    //% block="on nbiot received"
+    //% blockHandlerKey="nbiotreceived"
+    //% weight = 81
+    //% advanced=true
+    export function onReceivedBuffer(callback: (buffer: Buffer) => void) {
+        onConnected(function () {
+            ensureSocket()
+        })
+        control.onEvent(NbiotEvents.ID, NbiotEvents.RECEIVED_MSG, () => {
+            const length = receivedMessageLength
+            receivedMessageLength = 0
+            writeCommand(`AT+NSORF=${socket},${length}`)
+            // <socket>,"<ip_addr>",<port>,<length>,"<data>",<remaining_length>
+            let fields = split(readLine(), ",")
+            let received = parseInt(fields[3])
+            let data = fields[4].substr(1, fields[4].length - 2) // strip quotes
+            let buffer = control.createBuffer(received)
+            for (let i = 0; i < received; i++) {
+                let byte = hexToByte(data.charAt(i * 2) + data.charAt(i * 2 + 1))
+                buffer.setNumber(NumberFormat.UInt8LE, i, byte)
+            }
+
+            callback(buffer)
+        })
     }
 
     /**
@@ -167,7 +268,7 @@ namespace nbiot {
      * attached to the network, or false if not.
      */
     //% block
-    //% weight = 80
+    //% weight = 90
     export function isConnected(): boolean {
         return _isConnected
     }
@@ -279,8 +380,29 @@ namespace nbiot {
         // ignore empty lines
         if (lineEnd > 0) {
             lines.push(rxData.substr(0, lineEnd))
+            control.inBackground(checkResponseLine)
         }
         rxData = rxData.substr(lineEnd + 2)
+    }
+
+    let receivedMessageLength = 0
+    function checkResponseLine() {
+        if (lines.length == 0) {
+            return
+        }
+        let lastLine = lines[lines.length - 1]
+        if (lastLine.indexOf("+NSONMI") == 0) {
+            // +NSONMI: <socket>,<length>
+            receivedMessageLength = parseInt(lastLine.substr(11))
+            if (receivedMessageLength > 0) {
+                control.inBackground(function () {
+                    basic.pause(10)
+                    control.raiseEvent(NbiotEvents.ID, NbiotEvents.RECEIVED_MSG)
+                })
+            }
+        } else if (lastLine == "OK" || lastLine.indexOf("ERROR") >= 0) {
+            control.raiseEvent(NbiotEvents.ID, NbiotEvents.RX_END)
+        }
     }
 
     function waitForResponse(timeout = 10000): boolean {
@@ -303,6 +425,33 @@ namespace nbiot {
             basic.pause(delayTime)
         }
         return false
+    }
+
+    function ensureSocket() {
+        if (socket == -1) {
+            createSocket()
+        }
+    }
+
+    function split(str: string, separator: string): string[] {
+        let start = 0
+        let result: string[] = []
+        while (true) {
+            let end = str.indexOf(separator, start)
+            if (end == -1) {
+                result.push(str.substr(start))
+                return result
+            }
+            result.push(str.substr(start, end - start))
+            start = end + separator.length
+        }
+    }
+
+    const hexAlphabet = "0123456789ABCDEF"
+    function hexToByte(hex: string): NumberFormat.UInt8LE {
+        let h1 = hexAlphabet.indexOf(hex.charAt(0))
+        let h2 = hexAlphabet.indexOf(hex.charAt(1))
+        return (h1 << 4) + h2
     }
 
     /**
