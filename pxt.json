@@ -6,7 +6,9 @@
     "description": "SARA N2 NB-IoT package for pxt-microbit",
     "files": [
         "README.md",
-        "nbiot.ts"
+        "nbiot.ts",
+        "_locales/no/nbiot-strings.json",
+        "_locales/no/nbiot-jsdocs-strings.json"
     ],
     "testFiles": [
         "test.ts"
