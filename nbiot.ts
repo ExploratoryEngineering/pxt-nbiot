@@ -16,8 +16,8 @@ namespace nbiot {
      * Connect to the NB-IoT module
      * This involves opening a serial connection on chosen pins and connect to the
      * NB-IoT network.
-     * @param rx The pin that is connected to RXD on EE-NBIOT-01, eg: SerialPin.P0
-     * @param tx The pin that is connected to TXD on EE-NBIOT-01, eg: SerialPin.P1
+     * @param rx The pin that is connected to RXD on SARA-N2, eg: SerialPin.P0
+     * @param tx The pin that is connected to TXD on SARA-N2, eg: SerialPin.P1
      */
     //% blockId=nbiot_connect
     //% block="connect RX on %rx and TX on %tx"
@@ -74,7 +74,7 @@ namespace nbiot {
     }
 
     /**
-     * Get the IMEI from the u-blox N210
+     * Get the IMEI from the SARA N2
      */
     //% block
     //% weight = 12
@@ -84,7 +84,7 @@ namespace nbiot {
     }
 
     /**
-     * Configure server IP address and port. When sending strings or numbers,
+     * Configure server IP address and port. When sending data,
      * it will be sent as an UPD message to this IP and port.
      * @param ip The IP address to send data, eg: "172.16.15.14"
      * @param port The port to send data, eg: 1234
@@ -163,7 +163,7 @@ namespace nbiot {
 
     /**
      * Check if we're connected to the network
-     * Returns true if the u-blox has successfully
+     * Returns true if the SARA N2 has successfully
      * attached to the network, or false if not.
      */
     //% block
@@ -197,7 +197,7 @@ namespace nbiot {
     }
 
     /**
-     * Send raw AT-command to u-blox N210 and wait for OK
+     * Send raw AT-command to SARA N2 and wait for OK
      * After 3 failed attempts it reboots the micro:bit
      * @param cmd The full command, eg: "AT+CFUN=1"
      * @param retries How many times to retry in case the command fails, eg: 3
@@ -241,7 +241,7 @@ namespace nbiot {
     }
 
     /**
-     * Read response line from u-blox N210
+     * Read response line from SARA N2
      */
     //% block
     //% advanced=true
@@ -253,7 +253,7 @@ namespace nbiot {
     }
 
     /**
-     * Reboot the u-blox N210
+     * Reboot the SARA N2
      */
     //% block
     //% advanced=true
