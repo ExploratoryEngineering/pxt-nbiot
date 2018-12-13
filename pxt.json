@@ -8,7 +8,7 @@
         "README.md",
         "nbiot.ts",
         "_locales/no/nbiot-strings.json",
-        "_locales/no/nbiot-jsdocs-strings.json"
+        "_locales/no/nbiot-jsdoc-strings.json"
     ],
     "testFiles": [
         "test.ts"
