@@ -393,7 +393,7 @@ namespace nbiot {
         let lastLine = lines[lines.length - 1]
         if (lastLine.indexOf("+NSONMI") == 0) {
             // +NSONMI: <socket>,<length>
-            receivedMessageLength = parseInt(lastLine.substr(11))
+            receivedMessageLength = parseInt(split(lastLine, ",")[1])
             if (receivedMessageLength > 0) {
                 control.inBackground(function () {
                     basic.pause(10)
