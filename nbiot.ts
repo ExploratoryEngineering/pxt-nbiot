@@ -145,7 +145,7 @@ namespace nbiot {
     }
 
     /**
-     * Receive a message
+     * Receive a message on port 1234
      */
     //% blockId=nbiot_on_receive_string
     //% block="on nbiot received"
@@ -162,7 +162,7 @@ namespace nbiot {
     }
 
     /**
-     * Receive a number
+     * Receive a number on port 1234
      * 
      * The number will be interpreted as a signed int in big endian format (max 32 bit)
      */
@@ -215,7 +215,7 @@ namespace nbiot {
     }
 
     /**
-     * Receive bytes
+     * Receive bytes on port 1234
      */
     //% blockId=nbiot_on_receive_bytes
     //% block="on nbiot received"
@@ -233,7 +233,7 @@ namespace nbiot {
     }
 
     /**
-     * Receive buffer
+     * Receive buffer on port 1234
      */
     //% blockId=nbiot_on_receive_buffer
     //% block="on nbiot received"
