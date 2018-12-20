@@ -293,7 +293,7 @@ namespace nbiot {
     //% block
     //% advanced=true
     export function createSocket() {
-        writeCommand(`AT+NSOCR="DGRAM",17,30000,1`)
+        writeCommand(`AT+NSOCR="DGRAM",17,1234,1`)
         socket = parseInt(readLine())
     }
 
